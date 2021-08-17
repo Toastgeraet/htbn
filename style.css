@@ -1,0 +1,45 @@
+body {
+    font-family: 'Brush Script MT', cursive;
+}
+
+.page {
+    text-align: center;
+    width: 600px;
+    margin: auto;
+}
+
+.flex {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.between {
+    justify-content: space-between;
+}
+
+.box {
+    width: 100px;
+    height: 100px;
+    border: 3px dashed;
+    border-radius: 50px;
+    font-size: xx-large;
+}
+
+.center {
+    align-items: center;
+}
+
+.box:hover {
+    border-style: solid;
+    cursor: pointer;
+    background-color: cadetblue;
+}
+
+scoreboard-ce {
+    display: inline-block;
+    margin-top: 2em;
+    border: 2px solid;
+    border-radius: 5px;
+    width: 400px;
+    padding: 0.5em;
+}

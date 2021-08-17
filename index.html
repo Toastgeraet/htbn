@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Click the biggest number!</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<template id="scoreboard">
+    <div class="scoreboard">
+        <div class="flex between">
+            <span id="score-correct">Correct: 0</span>
+            <span id="score-mistakes">Mistakes: 0</span>
+            <span id="score-time-bonus">Time-Bonus: 0</span>
+        </div>
+    </div>
+</template>
+
+<body>
+    <div class="page">
+        <h1>Hit the biggest number!</h1>
+        <div class="flex">
+            <div class="box flex center">1</div>
+            <div class="box flex center">2</div>
+            <div class="box flex center">3</div>
+        </div>
+        <scoreboard-ce></scoreboard-ce>
+    </div>
+</body>
+
+</html>
+<script type="module">
+    import "./scoreboard.js";
+    let boxes;
+    setup();
+
+    function setup() {
+        boxes = document.querySelectorAll('.box');
+        assignRandomNumbers(boxes);
+        boxes.forEach(target => target.addEventListener('click', boxClicked));
+    }
+
+    function boxClicked(event) {
+        let clickedBox = event.currentTarget;
+        let guessedNumber = clickedBox.getAttribute("data-number");
+        let biggestNumber = Math.max(...[...boxes].map(b => b.getAttribute("data-number")));
+
+        if (guessedNumber == biggestNumber) {
+            console.log(`congrats!`);
+        }
+        else {
+            console.log(`booo!`);
+        }
+
+        assignRandomNumbers(boxes);
+    }
+
+    function assignRandomNumbers(boxes) {
+        for (const box of boxes) {
+            let rnd = getRandomInt(10);
+            box.innerHTML = `<div>${rnd}</div>`;
+            box.setAttribute("data-number", rnd);
+        }
+    }
+
+    function getRandomInt(max) {
+        return Math.floor(Math.random() * max);
+    }
+
+</script>
