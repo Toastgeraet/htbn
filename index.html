@@ -127,7 +127,7 @@
 
     function assignRandomNumbers(boxes) {
         for (const box of boxes) {
-            switch (getRandomInt(2)) {
+            switch (getRandomInt(3)) {
                 case 0:
                     let rnd = getRandomInt(10);
                     box.innerHTML = `<div>${rnd}</div>`;
@@ -139,6 +139,12 @@
                     box.innerHTML = `<div>${add1} + ${add2}</div>`;
                     box.setAttribute("data-number", add1 + add2);
                     break;
+                case 2:
+                    let min = 5 + getRandomInt(5);
+                    let sub = getRandomInt(min);
+                    let diff = min - sub;
+                    box.innerHTML = `<div>${min} - ${sub}</div>`;
+                    box.setAttribute("data-number", diff);
                 default:
                     break;
             }
