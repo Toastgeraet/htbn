@@ -8,12 +8,12 @@
 
 <style>
     @font-face {
-        font-family: 'Font Name';
-        src: url('fonts/fontfilename.woff2') format('woff2');
+        font-family: 'Main';
+        src: url('fonts/orbitron-bold-webfont.woff') format('woff');
     }
 
     body {
-        font-family: 'Brush Script MT', cursive;
+        font-family: 'Main';
         font-size: 100%;
     }
 
@@ -58,8 +58,8 @@
         display: inline-block;
         margin-top: 2em;
         border: 2px solid;
-        border-radius: 5px;
-        width: 500px;
+        border-radius: 20px;
+        width: 800px;
         font-size: 2em;
         padding: 0.5em;
     }
@@ -70,8 +70,8 @@
         <h1>Hit the biggest number!</h1>
         <div class="flex">
             <div class="box flex center" data-number="1">1</div>
+            <div class="box flex center" data-number="3">Start</div>
             <div class="box flex center" data-number="2">2</div>
-            <div class="box flex center" data-number="3">3</div>
         </div>
         <div data-game-state="MAIN_MENU"><button>Hello</button></div>
         <div class="scoreboard">
@@ -97,7 +97,8 @@
 
     const gameStates = {
         MAIN_MENU: "MAIN_MENU",
-        STANDARD: "STANDARD"
+        STANDARD: "STANDARD",
+        MULTIPLICATION_TABLES_BASIC: "MULTIPLICATION_TABLES_BASIC"
     }
 
     const _game = {
@@ -124,10 +125,10 @@
 
     const game = new Proxy(_game, gameStateMachine);
 
-    setup();
+    setup(gameStates.MULTIPLICATION_TABLES_BASIC);
 
-    function setup() {
-        game.state = gameStates.STANDARD;
+    function setup(gameState) {
+        game.state = gameState;
         boxes = document.querySelectorAll('.box');
         boxes.forEach(target => target.addEventListener('click', boxClicked));
         setInterval(updateTimeLeft, 1000);
@@ -162,29 +163,96 @@
     }
 
     function assignRandomNumbers(boxes) {
-        for (const box of boxes) {
-            switch (getRandomInt(3)) {
-                case 0:
-                    let rnd = getRandomInt(10);
-                    box.innerHTML = `<div>${rnd}</div>`;
-                    box.setAttribute("data-number", rnd);
-                    break;
-                case 1:
-                    let add1 = getRandomInt(10);
-                    let add2 = getRandomInt(10 - add1);
-                    box.innerHTML = `<div>${add1} + ${add2}</div>`;
-                    box.setAttribute("data-number", add1 + add2);
-                    break;
-                case 2:
-                    let min = 5 + getRandomInt(5);
-                    let sub = getRandomInt(min);
-                    let diff = min - sub;
-                    box.innerHTML = `<div>${min} - ${sub}</div>`;
-                    box.setAttribute("data-number", diff);
-                default:
-                    break;
-            }
+        switch (game.state) {
+            case gameStates.STANDARD:
+                boxes.forEach(b => createStandardTask(b));
+                break;
+            case gameStates.MULTIPLICATION_TABLES_BASIC:
+                let task1, task2, task3;
+                task1 = createMultiplicationTask(2, 7);
+                
+                // task2 = createModifiedMultiplicationTask(task1);
+                do {
+                    task2 = createModifiedMultiplicationTask(task1);
+                } while (task2[0] * task2[1] == task1[0] * task1[1]);
+                
+                // task3 = createModifiedMultiplicationTask(task2);
+                do {
+                    task3 = createModifiedMultiplicationTask(task1);
+                } while (task3[0] * task3[1] == task1[0] * task1[1]
+                        || task3[0] * task3[1] == task2[0] * task2[1]);
+                
+
+                let tasks = [
+                    task1,
+                    task2,
+                    task3
+                ].sort(() => 0.5 - Math.random());
+
+                for (const box of boxes) {
+                    let [fac1, fac2] = tasks.pop();
+                    switch (getRandomInt(3)) {
+                        case 0:
+                        case 1:
+                            box.innerHTML = `<div>${fac1} x ${fac2}</div>`;
+                            box.setAttribute("data-number", fac1 * fac2);
+                            break;
+                        case 2:
+                            box.innerHTML = `<div>${fac1 * fac2}</div>`;
+                            box.setAttribute("data-number", fac1 * fac2);
+                            break;
+                    }
+                }
+                break;
+            default:
+                break;
         }
+    }
+
+    function createStandardTask(box) {
+        switch (getRandomInt(3)) {
+            case 0:
+                let rnd = getRandomInt(10);
+                box.innerHTML = `<div>${rnd}</div>`;
+                box.setAttribute("data-number", rnd);
+                break;
+            case 1:
+                let add1 = getRandomInt(10);
+                let add2 = getRandomInt(10 - add1);
+                box.innerHTML = `<div>${add1} + ${add2}</div>`;
+                box.setAttribute("data-number", add1 + add2);
+                break;
+            case 2:
+                let min = 5 + getRandomInt(5);
+                let sub = getRandomInt(min);
+                let diff = min - sub;
+                box.innerHTML = `<div>${min} - ${sub}</div>`;
+                box.setAttribute("data-number", diff);
+            default:
+                break;
+        }
+    }
+
+    function createMultiplicationTask(base = 0, modifier = 11) {
+        let fac1 = base + getRandomInt(modifier);
+        let fac2 = base + getRandomInt(modifier);
+        return [fac1, fac2];
+    }
+
+    function createModifiedMultiplicationTask(base, modifier = 2) {
+        let [fac1, fac2] = [...base].sort(() => 0.5 - Math.random());
+        fac1 = clamp(fac1 + getModifier(modifier), 0, 10);
+        fac2 = clamp(fac2 + getModifier(modifier), 0, 10);
+        return [fac1, fac2];
+    }
+
+    function clamp(value, min, max) {
+        return Math.max(Math.min(max, value), min);
+    }
+
+    function getModifier(delta) {
+        let mod = Math.floor(Math.random() * (delta * 2 + 1)) - delta;
+        return mod;
     }
 
     function getRandomInt(max) {
