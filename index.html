@@ -21,6 +21,21 @@
         font-size: 4em;
     }
 
+    button.menu {
+        background-color: white;
+        box-shadow: 12px 12px 15px rgba(30, 33, 33, .2);
+        border: 3px solid;
+        border-radius: 20px;
+        padding: 0.5em;
+        margin-right: 5px;
+        margin-left: 5px;
+        font-size: 2em;
+    }
+
+    .mb-2 {
+        margin-bottom: 2rem;
+    }
+
     .page {
         text-align: center;
         width: 800px;
@@ -48,7 +63,8 @@
         align-items: center;
     }
 
-    .box:hover {
+    .box:hover,
+    button:hover {
         border-style: solid;
         cursor: pointer;
         background-color: cadetblue;
@@ -56,7 +72,6 @@
 
     .scoreboard {
         display: inline-block;
-        margin-top: 2em;
         border: 2px solid;
         border-radius: 20px;
         width: 800px;
@@ -68,18 +83,23 @@
 <body>
     <div class="page">
         <h1>Hit the biggest number!</h1>
-        <div class="flex">
+        <div class="flex mb-2">
             <div class="box flex center" data-number="1">1</div>
             <div class="box flex center" data-number="3">Start</div>
             <div class="box flex center" data-number="2">2</div>
         </div>
-        <div data-game-state="MAIN_MENU"><button>Hello</button></div>
-        <div class="scoreboard">
+
+        <div class="scoreboard mb-2">
             <div class="flex between">
                 <span id="score-correct">Correct: 0</span>
                 <span id="score-mistakes">Mistakes: 0</span>
                 <span id="score-time-bonus">Time-Bonus: 0</span>
             </div>
+        </div>
+
+        <div class="flex mb-2">
+            <button class="menu" data-set-game-state="STANDARD">Add & Subtract</button>
+            <button class="menu" data-set-game-state="MULTIPLICATION_TABLES_BASIC">Multiplication Tables</button>
         </div>
     </div>
 </body>
@@ -87,7 +107,6 @@
 </html>
 
 <script>
-    let boxes;
     let score = {
         correct: 0,
         mistakes: 0,
@@ -125,22 +144,53 @@
 
     const game = new Proxy(_game, gameStateMachine);
 
-    setup(gameStates.MULTIPLICATION_TABLES_BASIC);
+    //define boxes globally because they are used everywhere and are essential to the game
+    let boxes;
+    boxes = document.querySelectorAll('.box');
+    boxes[1].addEventListener("click", startGame);
+
+    function startGame() {
+        boxes[1].removeEventListener("click", startGame);
+        setup(gameStates.MULTIPLICATION_TABLES_BASIC);
+    }
+
+    function attachBoxListeners() {
+        boxes.forEach(target => target.addEventListener('click', boxClicked));
+    }
+    function removeBoxListeners() {
+        boxes.forEach(target => target.removeEventListener('click', boxClicked));
+    }
 
     function setup(gameState) {
         game.state = gameState;
-        boxes = document.querySelectorAll('.box');
-        boxes.forEach(target => target.addEventListener('click', boxClicked));
+        attachBoxListeners();
+        menuButtons = document.querySelectorAll('button.menu');
+        menuButtons.forEach(target => target.addEventListener('click', menuClicked));
+        nextQuestion();
         setInterval(updateTimeLeft, 1000);
     }
 
+    function menuClicked(event) {
+        let button = event.currentTarget;
+        game.state = button.dataset.setGameState;
+        nextQuestion();
+    }
+
+    let pauseTimeLeft = false;
     function updateTimeLeft(seconds) {
+        if (pauseTimeLeft) return;
         if (seconds) {
             timeLeft = seconds;
         } else {
             timeLeft = Math.max(timeLeft - 1, 0);
         }
         document.getElementById('score-time-bonus').innerHTML = `Time-Bonus: ${timeLeft}`;
+    }
+    function pauseTimer() {
+        pauseTimeLeft = true;
+    }
+    function unpauseTimer() {
+        pauseTimeLeft = false;
     }
 
     function boxClicked(event) {
@@ -158,11 +208,35 @@
             document.getElementById('score-mistakes').innerHTML = `Mistakes: ${score.mistakes}`;
         }
 
-        assignRandomNumbers(boxes);
-        updateTimeLeft(5);
+        if (game.state === gameStates.MULTIPLICATION_TABLES_BASIC) {
+            pauseTimer();
+            removeBoxListeners();
+            boxes.forEach(b => {
+                if (b.innerText.includes("x")) {
+                    b.firstElementChild.append(document.createElement("br"))
+                    b.firstElementChild.append(` = ${b.dataset.number}`)
+                }
+                if (b.dataset.number == biggestNumber) {
+                    b.style["background-color"] = "forestgreen"
+                } else {
+                    b.style["background-color"] = "firebrick"
+                }
+            })
+            setTimeout(() => {
+                unpauseTimer();
+                attachBoxListeners();
+                boxes.forEach(b => b.removeAttribute("style"));
+                nextQuestion();
+                updateTimeLeft(5);
+            }, 2000);
+        }
+        else {
+            nextQuestion();
+            updateTimeLeft(5);
+        }
     }
 
-    function assignRandomNumbers(boxes) {
+    function nextQuestion() {
         switch (game.state) {
             case gameStates.STANDARD:
                 boxes.forEach(b => createStandardTask(b));
@@ -170,18 +244,18 @@
             case gameStates.MULTIPLICATION_TABLES_BASIC:
                 let task1, task2, task3;
                 task1 = createMultiplicationTask(2, 7);
-                
+
                 // task2 = createModifiedMultiplicationTask(task1);
                 do {
                     task2 = createModifiedMultiplicationTask(task1);
                 } while (task2[0] * task2[1] == task1[0] * task1[1]);
-                
+
                 // task3 = createModifiedMultiplicationTask(task2);
                 do {
                     task3 = createModifiedMultiplicationTask(task1);
                 } while (task3[0] * task3[1] == task1[0] * task1[1]
-                        || task3[0] * task3[1] == task2[0] * task2[1]);
-                
+                    || task3[0] * task3[1] == task2[0] * task2[1]);
+
 
                 let tasks = [
                     task1,
