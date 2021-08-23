@@ -74,9 +74,38 @@
         display: inline-block;
         border: 2px solid;
         border-radius: 20px;
-        width: 800px;
+        width: 764px;
         font-size: 2em;
         padding: 0.5em;
+    }
+
+    .timer-bar div {
+        /* setup bar base style */
+        border-radius: 5px;
+        height: 15px;
+        background: rgb(131,58,180);
+        background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%);
+        transform: scaleX(0);
+    }
+
+    .white {
+        color: white;
+    }
+
+    .timer-bar.start div {
+        animation: roundtime calc(var(--duration) * 1s) linear forwards;
+        transform-origin: center;
+    }
+
+    @keyframes roundtime {
+        from {
+            transform: scaleX(1);
+        }
+
+        to {
+            /* More performant than animating `width` */
+            transform: scaleX(0);
+        }
     }
 </style>
 
@@ -87,6 +116,9 @@
             <div class="box flex center" data-number="1">1</div>
             <div class="box flex center" data-number="3">Start</div>
             <div class="box flex center" data-number="2">2</div>
+        </div>
+        <div class="timer-bar mb-2" style="--duration: 2;" data-style="smooth">
+            <div></div>
         </div>
 
         <div class="scoreboard mb-2">
@@ -208,6 +240,7 @@
             document.getElementById('score-mistakes').innerHTML = `Mistakes: ${score.mistakes}`;
         }
 
+        let timerBar = document.querySelector(".timer-bar");
         if (game.state === gameStates.MULTIPLICATION_TABLES_BASIC) {
             pauseTimer();
             removeBoxListeners();
@@ -217,17 +250,23 @@
                     b.firstElementChild.append(` = ${b.dataset.number}`)
                 }
                 if (b.dataset.number == biggestNumber) {
-                    b.style["background-color"] = "forestgreen"
+                    b.style["background-color"] = "green"//"forestgreen"
                 } else {
-                    b.style["background-color"] = "firebrick"
+                    b.style["background-color"] = "red"//"firebrick"
                 }
+                b.style.color = "white";
+                b.style["text-shadow"] = "-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000";
+                b.style["border-color"] = "#000"
+                b.style["border-style"] = "solid"
             })
+            timerBar.classList.add("start");
             setTimeout(() => {
                 unpauseTimer();
                 attachBoxListeners();
                 boxes.forEach(b => b.removeAttribute("style"));
                 nextQuestion();
                 updateTimeLeft(5);
+                timerBar.classList.remove("start");
             }, 2000);
         }
         else {
