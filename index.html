@@ -7,6 +7,11 @@
 </head>
 
 <style>
+    @font-face {
+        font-family: 'Font Name';
+        src: url('fonts/fontfilename.woff2') format('woff2');
+    }
+
     body {
         font-family: 'Brush Script MT', cursive;
         font-size: 100%;
@@ -68,6 +73,7 @@
             <div class="box flex center" data-number="2">2</div>
             <div class="box flex center" data-number="3">3</div>
         </div>
+        <div data-game-state="MAIN_MENU"><button>Hello</button></div>
         <div class="scoreboard">
             <div class="flex between">
                 <span id="score-correct">Correct: 0</span>
@@ -89,9 +95,39 @@
     };
     let timeLeft = 0;
 
+    const gameStates = {
+        MAIN_MENU: "MAIN_MENU",
+        STANDARD: "STANDARD"
+    }
+
+    const _game = {
+        state: gameStates.MAIN_MENU
+    }
+
+    const gameStateMachine = {
+        set: function (target, prop, value, receiver) {
+            if (prop === "state") {
+                if (!gameStates.hasOwnProperty(value)) {
+                    throw 'Invalid game state';
+                }
+                document.querySelectorAll("[data-game-state]").forEach(e => {
+                    if (e.getAttribute("data-game-state") === value) {
+                        e.style.visibility = "visible";
+                    } else {
+                        e.style.visibility = "hidden";
+                    }
+                });
+            }
+            return Reflect.set(...arguments);
+        }
+    }
+
+    const game = new Proxy(_game, gameStateMachine);
+
     setup();
 
     function setup() {
+        game.state = gameStates.STANDARD;
         boxes = document.querySelectorAll('.box');
         boxes.forEach(target => target.addEventListener('click', boxClicked));
         setInterval(updateTimeLeft, 1000);
