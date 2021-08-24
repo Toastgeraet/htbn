@@ -81,17 +81,21 @@
         display: inline-block;
         border: 2px solid;
         border-radius: 20px;
-        width: 764px;
         font-size: 2em;
         padding: 0.5em;
+    }
+
+    .scoreboard span {
+        margin-left: 1em;
+        margin-right: 1em;
     }
 
     .timer-bar div {
         /* setup bar base style */
         border-radius: 5px;
         height: 15px;
-        background: rgb(131,58,180);
-        background: linear-gradient(90deg, rgba(131,58,180,1) 0%, rgba(253,29,29,1) 50%, rgba(252,176,69,1) 100%);
+        background: rgb(131, 58, 180);
+        background: linear-gradient(90deg, rgba(131, 58, 180, 1) 0%, rgba(253, 29, 29, 1) 50%, rgba(252, 176, 69, 1) 100%);
         transform: scaleX(0);
     }
 
@@ -102,6 +106,10 @@
     .timer-bar.start div {
         animation: roundtime calc(var(--duration) * 1s) linear forwards;
         transform-origin: center;
+    }
+
+    .hidden {
+        display: none;
     }
 
     @keyframes roundtime {
@@ -129,10 +137,10 @@
         </div>
 
         <div class="scoreboard mb-2">
-            <div class="flex between">
+            <div class="flex around">
                 <span id="score-correct">Correct: 0</span>
                 <span id="score-mistakes">Mistakes: 0</span>
-                <span id="score-time-bonus">Time-Bonus: 0</span>
+                <span id="score-time-bonus" class="hidden">Time-Bonus: 0</span>
             </div>
         </div>
 
@@ -285,44 +293,16 @@
     function nextQuestion() {
         switch (game.state) {
             case gameStates.STANDARD:
-                boxes.forEach(b => createStandardTask(b));
+                boxes.forEach(box => createStandardTask(box));
                 break;
             case gameStates.MULTIPLICATION_TABLES_BASIC:
-                let task1, task2, task3;
-                task1 = createMultiplicationTask(2, 7);
-
-                // task2 = createModifiedMultiplicationTask(task1);
-                do {
-                    task2 = createModifiedMultiplicationTask(task1);
-                } while (task2[0] * task2[1] == task1[0] * task1[1]);
-
-                // task3 = createModifiedMultiplicationTask(task2);
-                do {
-                    task3 = createModifiedMultiplicationTask(task1);
-                } while (task3[0] * task3[1] == task1[0] * task1[1]
-                    || task3[0] * task3[1] == task2[0] * task2[1]);
-
-
-                let tasks = [
-                    task1,
-                    task2,
-                    task3
-                ].sort(() => 0.5 - Math.random());
-
-                for (const box of boxes) {
-                    let [fac1, fac2] = tasks.pop();
-                    switch (getRandomInt(3)) {
-                        case 0:
-                        case 1:
-                            box.innerHTML = `<div>${fac1} x ${fac2}</div>`;
-                            box.setAttribute("data-number", fac1 * fac2);
-                            break;
-                        case 2:
-                            box.innerHTML = `<div>${fac1 * fac2}</div>`;
-                            box.setAttribute("data-number", fac1 * fac2);
-                            break;
-                    }
-                }
+                let randomlyOrderedBoxes = [...boxes].sort(() => 0.5 - Math.random());
+                let baseTask = createMultiplicationTask();
+                let products = [];
+                randomlyOrderedBoxes.forEach(box => {
+                    let [, , prod] = createMultiplicationTask(box, baseTask, products);
+                    products.push(prod);
+                })
                 break;
             default:
                 break;
@@ -332,20 +312,29 @@
     function createStandardTask(box) {
         switch (getRandomInt(3)) {
             case 0:
+                // create very simple task
                 let rnd = getRandomInt(10);
+
+                // display part: assign task to box (refactor out of here)
                 box.innerHTML = `<div>${rnd}</div>`;
                 box.setAttribute("data-number", rnd);
                 break;
             case 1:
+                // create simple addition task
                 let add1 = getRandomInt(10);
                 let add2 = getRandomInt(10 - add1);
+
+                // display part: assign task to box (refactor out of here)
                 box.innerHTML = `<div>${add1} + ${add2}</div>`;
                 box.setAttribute("data-number", add1 + add2);
                 break;
             case 2:
+                // create simple subtraction task
                 let min = 5 + getRandomInt(5);
                 let sub = getRandomInt(min);
                 let diff = min - sub;
+
+                // display part: assign task to box (refactor out of here)
                 box.innerHTML = `<div>${min} - ${sub}</div>`;
                 box.setAttribute("data-number", diff);
             default:
@@ -353,17 +342,44 @@
         }
     }
 
-    function createMultiplicationTask(base = 0, modifier = 11) {
-        let fac1 = base + getRandomInt(modifier);
-        let fac2 = base + getRandomInt(modifier);
-        return [fac1, fac2];
-    }
+    function createMultiplicationTask(box = null, baseTask = null, excludeResults = []) {
+        let fac1, fac2;
+        let base = 2;
+        let modifier = 7;
 
-    function createModifiedMultiplicationTask(base, modifier = 2) {
-        let [fac1, fac2] = [...base].sort(() => 0.5 - Math.random());
-        fac1 = clamp(fac1 + getModifier(modifier), 0, 10);
-        fac2 = clamp(fac2 + getModifier(modifier), 0, 10);
-        return [fac1, fac2];
+        // repeat task creation as long as its result is in the result exclusion list
+        // -> avoids duplicate results
+        do {
+            if (baseTask) {
+                // make sure that the task is 'close' to the base task
+                // factors may differ by +-2 at most from the original ones
+                let [a, b] = baseTask.slice(0, 2).sort(() => 0.5 - Math.random())
+                fac1 = clamp(a + getModifier(2), 0, 10);
+                fac2 = clamp(b + getModifier(2), 0, 10);
+            } else {
+                fac1 = base + getRandomInt(modifier);
+                fac2 = base + getRandomInt(modifier);
+            }
+        } while (excludeResults.includes(fac1 * fac2));
+
+        // display part: assign task to box (refactor out of here)
+        if (box) {
+            // 2 out of 3 times, display as factors. rest is product
+            switch (getRandomInt(3)) {
+                case 0:
+                case 1:
+                    box.innerHTML = `<div>${fac1} x ${fac2}</div>`;
+                    box.setAttribute("data-number", fac1 * fac2);
+                    break;
+                case 2:
+                    box.innerHTML = `<div>${fac1 * fac2}</div>`;
+                    box.setAttribute("data-number", fac1 * fac2);
+                    break;
+            }
+        }
+
+        // return calculated task to use as baseTask or for other purposes
+        return [fac1, fac2, fac1 * fac2];
     }
 
     function clamp(value, min, max) {
