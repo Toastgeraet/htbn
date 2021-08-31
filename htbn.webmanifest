@@ -1,5 +1,5 @@
 {
-    "name": "Hit the biggest number!s",
+    "name": "Hit the biggest number!",
     "short_name": "HTBN",
     "description": "A game to exercise your mental calculation muscles.",
     "icons": [
@@ -14,7 +14,7 @@
         "type": "image/png"
       }
     ],
-    "start_url": "/htbn",
+    "start_url": "/htbn/index.html",
     "display": "fullscreen",
     "theme_color": "#B12A34",
     "background_color": "#B12A34"
